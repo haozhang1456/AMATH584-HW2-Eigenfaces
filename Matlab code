@@ -1,0 +1,116 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%Read in cropped images
+
+projectdir = 'CroppedYale'; %general dir  
+%search files and store name in a struct
+%   contained in file-name 
+subdinfo = dir(fullfile(projectdir, 'yale*')); 
+
+nsubfolders = length(subdinfo);
+nfiles = 0;
+vector = [];
+tmp = [];
+matrix_all = [];
+total_fls = 0;
+
+for i = 1 : nsubfolders
+
+    %projectdir = strcat('CroppedYale/yaleB',num2str(i,'%02d'));
+    projectdir = strcat('CroppedYale/',subdinfo(1).name);
+    dinfo = dir(fullfile(projectdir));
+    dinfo([dinfo.isdir]) = [];     %get rid of all directories including . and ..
+    nfiles = length(dinfo);
+    
+    for j = 1 : nfiles
+        filename = fullfile(projectdir, dinfo(j).name);
+        f1 = fopen(filename, 'r');
+        tmp = imread(filename); %read input matrix
+            for k = 1:size(tmp,2)
+                vector((192*(k-1)+1):(192*k),j) = tmp(:,k);
+            end
+        matrix_all(:,j+total_fls) = vector(:,j);
+        tmp = [];
+
+        fclose(f1);
+    end
+    total_fls = total_fls + j;
+end
+
+fprintf('total files count: %d \n', total_fls);
+fprintf('size of matrix (row * col ) %d %d \n', size(matrix_all));
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%SVD analysis for cropped images
+
+[u,s,v] = svd(matrix_all,'econ');
+
+sum = zeros(32256,2432);
+for i = 1 : 8 %change this number to adjust images
+    sum = sum + s(i,i)*u(:,i)*transpose(v(:,i));
+end
+D = imshow(uint8(sum));
+
+%pca percent
+num = 0;
+dom = 0;
+percent = 0;
+for j = 1 : 8% change this number in accordance with the first for loop
+    num = num + s(j,j)*s(j,j);
+end
+for k = 1 : 2432
+    dom = dom + s(k,k)*s(k,k);
+end
+percent = num./dom
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%Read in original images
+
+projectdir = 'yalefaces';
+dinfo = dir(fullfile(projectdir, 'subject*')); 
+
+
+nfiles = length(dinfo);
+vector = [];
+tmp = [];
+matrix_all = [];
+total_fls = 0;
+
+
+for j = 1 : nfiles
+    filename = fullfile(projectdir, dinfo(j).name);
+    f1 = fopen(filename, 'r');
+    tmp = imread(filename); %read input matrix
+    for k = 1:size(tmp,2)
+        vector((243*(k-1)+1):(243*k),j) = tmp(:,k);
+    end
+    matrix_all(:,j+total_fls) = vector(:,j);
+    tmp = [];
+
+    fclose(f1);
+        
+    total_fls = total_fls + j;
+end
+    
+
+fprintf('total files count: %d \n', total_fls);
+fprintf('size of matrix (row * col ) %d %d \n', size(matrix_all));
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%SVD analysis for original images
+
+[u,s,v] = svd(matrix_all,'econ');
+
+sum = zeros(32256,2432);
+for i = 1 : 8 %change this number to adjust images
+    sum = sum + s(i,i)*u(:,i)*transpose(v(:,i));
+end
+D = imshow(uint8(sum));
+
+%pca percent
+num = 0;
+dom = 0;
+percent = 0;
+for j = 1 : 8% change this number in accordance with the first for loop
+    num = num + s(j,j)*s(j,j);
+end
+for k = 1 : 2432
+    dom = dom + s(k,k)*s(k,k);
+end
+percent = num./dom
